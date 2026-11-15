@@ -13,25 +13,68 @@
     .plot-wrap{display:grid;grid-template-columns:25px minmax(0,1fr);grid-template-rows:minmax(0,1fr) 22px 20px;width:min(100%,680px);margin:auto}.plot-stage{position:relative;grid-column:2;border:1px solid #1c3031;border-radius:8px;overflow:hidden;background:#000;box-shadow:0 12px 34px rgba(0,0,0,.16)}canvas{display:block;width:100%;height:auto;aspect-ratio:1}.ylabel,.xlabel,.xticks,.yticks{color:#596b70;font-family:Consolas,monospace;font-size:11px}.ylabel{grid-row:1;writing-mode:vertical-rl;transform:rotate(180deg);align-self:center}.xticks{grid-column:2;display:flex;justify-content:space-between;padding-top:6px}.xlabel{grid-column:2;text-align:center;padding-top:3px}.yticks{position:absolute;inset:8px auto 8px 8px;z-index:2;display:flex;flex-direction:column;justify-content:space-between;color:rgba(255,255,255,.7);text-shadow:0 1px 2px #000}
     .control-head{align-items:flex-start;padding-bottom:18px;border-bottom:1px solid var(--line)}.reset{border:1px solid #cad8d6;border-radius:9px;background:#fff;color:#345457;padding:8px 11px;cursor:pointer;font-size:12px;font-weight:700;transition:.2s}.reset:hover{border-color:var(--teal);color:var(--teal)}.controls{display:grid;gap:22px;margin-top:22px}.group{display:grid;gap:9px}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}.symbol{display:grid;place-items:center;min-width:25px;height:25px;border-radius:7px;background:var(--soft);color:var(--teal);font-family:Georgia,serif;font-style:italic}.number{display:flex;align-items:center;border:1px solid #d2dddd;border-radius:8px;overflow:hidden;background:#fbfcfb}.number input{width:74px;border:0;outline:0;background:transparent;padding:7px 4px 7px 9px;color:var(--ink);text-align:right;font-family:Consolas,monospace;font-size:13px}.number span{min-width:34px;padding-right:8px;color:var(--muted);font-size:12px}.range{width:100%;accent-color:var(--teal);cursor:pointer}.limits{display:flex;justify-content:space-between;color:#8a999d;font:10px Consolas,monospace}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}.metrics div{border-radius:12px;background:#f0f5f3;padding:13px}.metrics span{display:block;margin-bottom:6px;color:var(--muted);font-size:11px}.metrics strong{font:700 15px Consolas,monospace}footer{padding:17px 0 0;color:var(--muted);text-align:center;font-size:12px}button:focus-visible,input:focus-visible{outline:3px solid rgba(18,107,104,.24);outline-offset:2px}
     
-    /* 右侧“实验参数”面板：进一步放大字号和间距 */
-    .controls-card .eyebrow{font-size:15px}
-    .controls-card .heading h2{font-size:26px}
-    .controls-card .reset{font-size:15px;padding:10px 15px;border-radius:10px}
-    .controls-card .controls{gap:32px;margin-top:28px}
-    .controls-card .label{font-size:19px}
-    .controls-card .symbol{min-width:34px;height:34px;font-size:19px;border-radius:9px}
-    .controls-card .number{border-radius:10px}
-    .controls-card .number input{width:92px;font-size:18px;padding:10px 4px 10px 12px}
-    .controls-card .number span{min-width:44px;padding-right:12px;font-size:16px}
-    .controls-card .limits{font-size:13px;margin-top:2px}
-    .controls-card .metrics{gap:14px;margin-top:30px}
-    .controls-card .metrics div{padding:16px;border-radius:14px}
-    .controls-card .metrics span{font-size:14px}
-    .controls-card .metrics strong{font-size:20px}
+    /* 桌面端：右侧“实验参数”面板放大字号和间距 */
+    @media(min-width:941px){
+      .controls-card .eyebrow{font-size:15px}
+      .controls-card .heading h2{font-size:26px}
+      .controls-card .reset{font-size:15px;padding:10px 15px;border-radius:10px}
+      .controls-card .controls{gap:32px;margin-top:28px}
+      .controls-card .label{font-size:19px}
+      .controls-card .symbol{min-width:34px;height:34px;font-size:19px;border-radius:9px}
+      .controls-card .number{border-radius:10px}
+      .controls-card .number input{width:92px;font-size:18px;padding:10px 4px 10px 12px}
+      .controls-card .number span{min-width:44px;padding-right:12px;font-size:16px}
+      .controls-card .limits{font-size:13px;margin-top:2px}
+      .controls-card .metrics{gap:14px;margin-top:30px}
+      .controls-card .metrics div{padding:16px;border-radius:14px}
+      .controls-card .metrics span{font-size:14px}
+      .controls-card .metrics strong{font-size:20px}
+    }
 
-    /* 响应式适配 */
-    @media(max-width:940px){.workspace{grid-template-columns:1fr}.controls-card{order:-1}.controls{grid-template-columns:repeat(3,1fr);gap:24px}.row{align-items:flex-start;flex-direction:column}.controls-card .metrics{margin-top:24px}}
-    @media(max-width:680px){.shell{padding-inline:12px}.top{align-items:flex-start;flex-direction:column}.workspace{gap:12px}.card{border-radius:16px;padding:16px}.controls{grid-template-columns:1fr;gap:26px}.row{align-items:center;flex-direction:row}.metrics{grid-template-columns:1fr}.heading{align-items:flex-start}}
+    /* 平板端：参数置顶，三列排布 */
+    @media(max-width:940px) and (min-width:681px){
+      .workspace{grid-template-columns:1fr}
+      .controls-card{order:-1}
+      .controls{grid-template-columns:repeat(3,1fr);gap:24px}
+      .row{align-items:flex-start;flex-direction:column}
+    }
+
+    /* 手机端：极致紧凑，图样缩小，参数在下，字体缩小 */
+    @media(max-width:680px){
+      .shell{padding:10px}
+      .top{margin-bottom:12px;align-items:flex-start;flex-direction:column;gap:10px}
+      .top h1{font-size:24px}
+      .card{border-radius:12px;padding:12px;box-shadow:0 4px 12px rgba(26,55,58,.05)}
+      
+      /* 图样区域限制大小，确保能一屏放下 */
+      .plot-wrap{width:min(100%, 280px);grid-template-columns:20px minmax(0,1fr);grid-template-rows:minmax(0,1fr) 18px 16px;}
+      .ylabel,.xlabel,.xticks,.yticks{font-size:10px}
+      .heading h2{font-size:16px}
+      .heading p{font-size:11px;margin-top:2px}
+      
+      /* 参数面板回到图样下方 */
+      .controls-card{order:0;margin-top:10px}
+      .control-head{padding-bottom:10px;align-items:center}
+      .controls-card .heading h2{font-size:18px}
+      .controls-card .reset{font-size:12px;padding:6px 10px}
+      
+      /* 手机端字体和控件缩小，间距减小 */
+      .controls{gap:12px;margin-top:12px;grid-template-columns:1fr}
+      .row{align-items:center;flex-direction:row}
+      .controls-card .label{font-size:14px;gap:6px}
+      .controls-card .symbol{min-width:24px;height:24px;font-size:14px}
+      .controls-card .number input{width:70px;font-size:14px;padding:6px 2px 6px 8px}
+      .controls-card .number span{font-size:12px;min-width:30px;padding-right:6px}
+      .controls-card .limits{font-size:10px}
+      
+      /* 底部指标缩小并排 */
+      .metrics{margin-top:12px;gap:8px}
+      .metrics div{padding:8px}
+      .metrics span{font-size:11px;margin-bottom:2px}
+      .metrics strong{font-size:14px}
+      
+      footer{padding-top:10px;font-size:10px}
+    }
   </style>
 </head>
 <body>
