@@ -55,7 +55,7 @@
     footer{padding:17px 0 0;color:var(--muted);text-align:center;font-size:12px}
     button:focus-visible,input:focus-visible{outline:3px solid rgba(18,107,104,.24);outline-offset:2px}
     
-    /* ================= 桌面端放大 ================= */
+    /* 桌面端放大 */
     @media(min-width:941px){
       .controls-card .eyebrow{font-size:15px}
       .controls-card .heading h2{font-size:26px}
@@ -73,7 +73,7 @@
       .controls-card .metrics strong{font-size:20px}
     }
 
-    /* ================= 平板端 ================= */
+    /* 平板端 */
     @media(max-width:940px) and (min-width:681px){
       .workspace{grid-template-columns:1fr;}
       .controls-card{order:-1;}
@@ -81,18 +81,16 @@
       .row{align-items:flex-start;flex-direction:column;}
     }
 
-    /* ================= 手机端：极致紧凑 ================= */
+    /* 手机端：紧凑布局 */
     @media(max-width:680px){
       .shell{padding:10px;}
       .top{margin-bottom:12px;align-items:flex-start;flex-direction:column;gap:8px;}
       .top h1{font-size:22px;}
       .card{border-radius:14px;padding:12px;}
       
-      /* 强制图样在上，参数在下 */
       .workspace{display:flex;flex-direction:column;gap:12px;}
       .controls-card{order:0;}
       
-      /* 图样卡片：居中且限制最大宽度 */
       .plot-wrap{width:100%;max-width:280px;margin:0 auto;grid-template-columns:15px minmax(0,1fr);grid-template-rows:minmax(0,1fr) 18px 16px;}
       .ylabel,.xlabel,.xticks,.yticks{font-size:10px;}
       .heading{flex-direction:column;align-items:flex-start;gap:6px;}
@@ -100,7 +98,6 @@
       .heading p{font-size:11px;margin-top:2px;}
       .wave-chip{font-size:11px;padding:5px 10px;}
       
-      /* 控制卡片：极限压榨空间 */
       .control-head{padding-bottom:8px;align-items:center;flex-direction:row;}
       .controls-card .heading h2{font-size:16px;}
       .controls-card .reset{font-size:12px;padding:5px 8px;}
@@ -130,7 +127,7 @@
     </header>
     <section class="workspace" aria-label="牛顿环仿真工作区">
       
-      <!-- 左侧图样 -->
+      <!-- 图样区 -->
       <article class="card">
         <div class="heading">
           <div><h2>等厚干涉——牛顿环实验干涉图样</h2><p>空气膜视场：−3 mm 至 3 mm</p></div>
@@ -147,7 +144,7 @@
         </div>
       </article>
 
-      <!-- 右侧参数 -->
+      <!-- 参数区 -->
       <aside class="card controls-card">
         <div class="heading control-head">
           <div><p class="eyebrow">实时控制</p><h2>实验参数</h2></div>
@@ -178,14 +175,14 @@
             <input class="range" id="index" type="range" min="1" max="2" step="0.01" value="1">
             <div class="limits"><span>1</span><span>2</span></div>
           </div>
-          <!-- 新增：光子数控制 -->
+          <!-- 光子数控制 -->
           <div class="group">
             <div class="row">
-              <label class="label" for="photons"><span>单像素平均光子数</span><span class="symbol">N</span></label>
-              <div class="number"><input id="photonsNumber" type="number" min="10" max="5000" step="10" value="1000" aria-label="光子数数值"><span>个</span></div>
+              <label class="label" for="photons"><span>光子数</span><span class="symbol">N</span></label>
+              <div class="number"><input id="photonsNumber" type="number" min="1" max="5000" step="1" value="30" aria-label="光子数数值"><span>个</span></div>
             </div>
-            <input class="range" id="photons" type="range" min="10" max="5000" step="10" value="1000">
-            <div class="limits"><span>10</span><span>5000</span></div>
+            <input class="range" id="photons" type="range" min="1" max="5000" step="1" value="30">
+            <div class="limits"><span>1</span><span>5000</span></div>
           </div>
         </div>
         <div class="metrics" aria-live="polite">
@@ -202,7 +199,6 @@
       const SIZE = 620, L = 0.003;
       const canvas = document.getElementById('plot'), ctx = canvas.getContext('2d', { alpha: false });
       
-      // 增加 photons 参数
       const controls = {
         radius: document.getElementById('radius'),
         wavelength: document.getElementById('wavelength'),
@@ -215,7 +211,8 @@
         index: document.getElementById('indexNumber'),
         photons: document.getElementById('photonsNumber')
       };
-      const defaults = { radius: 0.83, wavelength: 500, index: 1, photons: 1000 };
+      // 默认光子数设为 30，一打开就是散粒噪声状态
+      const defaults = { radius: 0.83, wavelength: 500, index: 1, photons: 30 };
       let pending = 0;
 
       function rgb(w) {
@@ -232,16 +229,16 @@
 
       function value(name) { return Number(controls[name].value); }
 
-      // 快速泊松/高斯随机数生成器（模拟量子散粒噪声）
+      // 模拟量子散粒噪声的随机数生成器
       function getNoisyIntensity(lambda) {
         if (lambda <= 0) return 0;
-        if (lambda < 30) {
-          // Knuth 算法（适用于较小值）
+        if (lambda < 100) {
+          // Knuth 算法（小数值时的精准泊松分布）
           let L = Math.exp(-lambda), k = 0, p = 1;
           do { k++; p *= Math.random(); } while (p > L);
           return k - 1;
         } else {
-          // 中心极限定理近似正态分布（比Box-Muller快，适合大样本）
+          // 大数值时使用正态分布近似（性能更好）
           let noise = (Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random() - 3) * 1.4142;
           return Math.max(0, Math.round(lambda + noise * Math.sqrt(lambda)));
         }
@@ -252,7 +249,7 @@
         const R = value('radius');
         const wlNm = value('wavelength');
         const n = value('index');
-        const photons = value('photons'); // 获取光子数
+        const photons = value('photons');
         const wl = wlNm * 1e-9;
         const c = rgb(wlNm);
         
@@ -269,11 +266,11 @@
             // 理论连续光强 [0, 1]
             const I = (1 - Math.cos(phase)) / 2;
             
-            // 加入光子散粒噪声：期望光子数为 I * photons
+            // 加入光子散粒噪声
             const expectedPhotons = I * photons;
             const actualPhotons = getNoisyIntensity(expectedPhotons);
             
-            // 计算显示亮度（归一化到 0~1，并且限制最大值为1）
+            // 计算显示亮度
             const V = Math.min(1, actualPhotons / photons);
             
             const o = (y * SIZE + x) * 4;
@@ -302,6 +299,7 @@
 
       Object.keys(controls).forEach(name => {
         controls[name].addEventListener('input', () => {
+          // 光子数和波长显示为整数，其他保留两位小数
           numbers[name].value = (name === 'wavelength' || name === 'photons') 
             ? Number(controls[name].value).toFixed(0) 
             : Number(controls[name].value).toFixed(2);
