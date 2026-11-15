@@ -106,7 +106,7 @@
       .row{align-items:center;flex-direction:row;}
       .controls-card .label{font-size:13px;gap:4px;}
       .controls-card .symbol{min-width:22px;height:22px;font-size:13px;}
-      .controls-card .number input{width:60px;font-size:13px;padding:5px 2px 5px 6px;}
+      .controls-card .number input{width:68px;font-size:13px;padding:5px 2px 5px 6px;}
       .controls-card .number span{font-size:11px;min-width:26px;padding-right:4px;}
       .controls-card .limits{font-size:9px;}
       
@@ -175,14 +175,14 @@
             <input class="range" id="index" type="range" min="1" max="2" step="0.01" value="1">
             <div class="limits"><span>1</span><span>2</span></div>
           </div>
-          <!-- 光子数控制：使用对数滑块映射 -->
+          <!-- 光子数控制：下限 1万，上限 1000万 -->
           <div class="group">
             <div class="row">
               <label class="label" for="photons"><span>光子数</span><span class="symbol">N</span></label>
-              <div class="number"><input id="photonsNumber" type="number" min="10" max="1000000" step="10" value="200" aria-label="光子数数值"><span>个</span></div>
+              <div class="number"><input id="photonsNumber" type="number" min="10000" max="10000000" step="1000" value="10000" aria-label="光子数数值"><span>个</span></div>
             </div>
-            <input class="range" id="photons" type="range" min="100" max="10000" step="1" value="2676">
-            <div class="limits"><span>10</span><span>100万</span></div>
+            <input class="range" id="photons" type="range" min="0" max="1000" step="1" value="0">
+            <div class="limits"><span>1万</span><span>1000万</span></div>
           </div>
         </div>
         <div class="metrics" aria-live="polite">
@@ -211,8 +211,9 @@
         index: document.getElementById('indexNumber'),
         photons: document.getElementById('photonsNumber')
       };
-      // 默认光子数 200
-      const defaults = { radius: 0.83, wavelength: 500, index: 1, photons: 200 };
+      
+      // 默认光子数从 10000 开始
+      const defaults = { radius: 0.83, wavelength: 500, index: 1, photons: 10000 };
       let pending = 0;
 
       function rgb(w) {
@@ -229,9 +230,8 @@
 
       function value(name) { return Number(controls[name].value); }
 
-      // 获取当前总光子数
       function getPhotonCount() {
-        return Math.min(1000000, Math.max(10, Number(numbers.photons.value)));
+        return Math.min(10000000, Math.max(10000, Number(numbers.photons.value)));
       }
 
       function draw() {
@@ -243,7 +243,7 @@
         const wl = wlNm * 1e-9;
         const c = rgb(wlNm);
         
-        // 1. 使用查找表(LUT)加速理论光强的计算
+        // 1. 查找表加速
         const MAX_R = Math.sqrt(2) * L;
         const LUT_SIZE = 2048;
         const lut = new Float32Array(LUT_SIZE);
@@ -257,7 +257,7 @@
         const I_array = new Float32Array(SIZE * SIZE);
         let sum_I = 0;
         
-        // 计算每个像素的归一化理论光强
+        // 计算光强分布
         for (let y = 0; y < SIZE; y++) {
             const py = L - y / (SIZE - 1) * 2 * L;
             const py2 = py * py;
@@ -275,38 +275,34 @@
         const scale = N / sum_I;
         const brightness = new Float32Array(SIZE * SIZE);
         
-        // 2. 泊松抽样（加入量子散粒噪声）
+        // 2. 泊松抽样
         for (let i = 0; i < SIZE * SIZE; i++) {
             const lambda = I_array[i] * scale;
             let k = 0;
             if (lambda > 0) {
                 if (lambda < 0.01) {
-                    // 极小概率时直接按概率生成一个光子
                     if (Math.random() < lambda) k = 1;
                 } else if (lambda < 30) {
-                    // Knuth 算法
                     let L_exp = Math.exp(-lambda), p = 1;
                     do { k++; p *= Math.random(); } while (p > L_exp);
                     k--;
                 } else {
-                    // 正态分布近似（大样本时性能更好）
                     const noise = (Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random() - 3) * 1.4142;
                     k = Math.max(0, Math.round(lambda + noise * Math.sqrt(lambda)));
                 }
             }
-            // 亮度映射：如果光子数很小，单个光子会直接达到全亮 (255)
             if (k > 0) {
                 brightness[i] = Math.min(1, k / (scale * 1.5));
             }
         }
         
-        // 3. 视觉补偿：如果总光子数较小，把光点膨胀，使其在手机/电脑上清晰可见
-        if (N < 50000) {
+        // 3. 视觉补偿：如果总光子数较少，把光点膨胀，使其清晰可见
+        if (N < 500000) {
             const expanded = new Float32Array(SIZE * SIZE);
             let r = 1;
-            if (N < 500) r = 3;
-            else if (N < 2000) r = 2;
-            else if (N < 10000) r = 1.5;
+            // 在 10000 光子时，半径设为 2，光点更显眼
+            if (N < 20000) r = 2;
+            else if (N < 100000) r = 1.5;
             else r = 1;
             r = Math.round(r);
             
@@ -327,7 +323,7 @@
             brightness.set(expanded);
         }
         
-        // 4. 输出图像
+        // 4. 渲染图像
         const image = ctx.createImageData(SIZE, SIZE);
         const d = image.data;
         for (let i = 0; i < SIZE * SIZE; i++) {
@@ -340,7 +336,7 @@
         }
         ctx.putImageData(image, 0, 0);
 
-        // 更新界面指示
+        // 更新界面
         const chip = document.getElementById('waveChip');
         chip.style.color = `rgb(${c.join(',')})`;
         chip.style.borderColor = `rgba(${c.join(',')},.45)`;
@@ -360,8 +356,8 @@
         controls[name].addEventListener('input', () => {
           if (name === 'photons') {
             const v = Number(controls[name].value);
-            // 对数映射：100~10000 -> 10~1000000
-            const N = Math.round(Math.pow(10, 1 + (v - 100) / 9900 * 5));
+            // 对数映射：滑块 0~1000 映射到 10^4 ~ 10^7
+            const N = Math.round(Math.pow(10, 4 + (v / 1000) * 3));
             numbers[name].value = N;
           } else {
             numbers[name].value = (name === 'wavelength') 
@@ -373,10 +369,10 @@
         
         numbers[name].addEventListener('change', () => {
           if (name === 'photons') {
-            const N = Math.min(1000000, Math.max(10, Number(numbers[name].value)));
+            const N = Math.min(10000000, Math.max(10000, Number(numbers[name].value)));
             numbers[name].value = N;
             // 反算滑块位置
-            controls[name].value = Math.round(100 + (Math.log10(N) - 1) / 5 * 9900);
+            controls[name].value = Math.round((Math.log10(N) - 4) / 3 * 1000);
           } else {
             const min = Number(controls[name].min), max = Number(controls[name].max);
             const v = Math.min(max, Math.max(min, Number(numbers[name].value)));
@@ -396,7 +392,7 @@
           if (name === 'photons') {
             const N = defaults[name];
             numbers[name].value = String(N);
-            controls[name].value = String(Math.round(100 + (Math.log10(N) - 1) / 5 * 9900));
+            controls[name].value = String(Math.round((Math.log10(N) - 4) / 3 * 1000));
           } else {
             controls[name].value = String(defaults[name]);
             numbers[name].value = (name === 'wavelength') 
